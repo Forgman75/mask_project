@@ -4,7 +4,7 @@ from src.widget import get_date, mask_account_card
 
 def main():
     DATE_STR_ISO = "2024-03-11T02:26:18.671407"
-    LIST_DICT = [
+    list_of_dicts = [
         {"id": 41428829, "state": "EXECUTED", "date": "2019-07-03T18:35:29.512364"},
         {"id": 939719570, "state": "EXECUTED", "date": "2018-06-30T02:08:58.425572"},
         {"id": 594226727, "state": "CANCELED", "date": "2018-09-12T21:27:25.241689"},
@@ -25,8 +25,8 @@ def main():
         print(mask_account_card(list_of_payment[i]))
 
     print(get_date(DATE_STR_ISO))
-    print(filter_by_state(LIST_DICT))
-    print(sort_by_date(LIST_DICT))
+    print(filter_by_state(list_of_dicts))
+    print(sort_by_date(list_of_dicts))
 
 
 if __name__ == "__main__":
