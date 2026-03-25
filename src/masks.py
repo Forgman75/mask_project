@@ -7,7 +7,9 @@ def get_mask_card_number(card_number: int) -> str:
 
     card_number_string = str(card_number)
     stars_string = f"{card_number_string[0:6]}******{card_number_string[-4:]}"
-    split_string = " ".join(stars_string[i * 4 : (i + 1) * 4] for i in range(4))
+    split_string = " ".join(
+        stars_string[i * 4 : (i + 1) * 4] for i in range(4)
+    )
 
     return split_string
 
