@@ -16,8 +16,14 @@ def mask_account_card(info: str) -> str:
 
     parts = info.split()
 
+    if len(parts) < 2:
+        raise ValueError("Ожидается формат: 'Тип Номер'")
+
     card_or_account_type = " ".join(parts[:-1])
     number = parts[-1]
+
+    if not number.isdigit():
+        raise ValueError("Номер должен содержать только цифры")
 
     if len(number) == 16:
         masked_number = get_mask_card_number(int(number))
