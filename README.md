@@ -59,6 +59,23 @@ print(filtered)  # [{"id": 1, ...}, {"id": 3, ...}]
 sorted_ops = sort_by_date(operations, ascending=False)
 print(sorted_ops)  # От новых к старым
 ```
+🧪 Тесты
+```
+# Запустить все тесты
+pytest
+
+# Запустить конкретный файл
+pytest tests/test_masks.py
+
+# Запустить конкретный тест
+pytest tests/test_masks.py::test_valid_card_masking
+
+# Запустить с отчётом о покрытии
+pytest --cov=src --cov-report=term-missing
+
+# Проверить что покрытие >= 80%
+pytest --cov=src --cov-fail-under=80
+```
 
 📝 Лицензия
 MIT License — свободное использование с указанием авторства.
