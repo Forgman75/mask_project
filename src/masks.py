@@ -5,6 +5,9 @@ def get_mask_card_number(card_number: int) -> str:
     и последних четырех цифр.
     """
 
+    if not isinstance(card_number, int):
+        raise TypeError(f"Expected int, got {type(card_number).__name__}")
+
     card_number_string = str(card_number)
     stars_string = f"{card_number_string[0:6]}******{card_number_string[-4:]}"
     split_string = " ".join(
