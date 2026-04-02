@@ -58,6 +58,48 @@ print(filtered)  # [{"id": 1, ...}, {"id": 3, ...}]
 # Сортировка операций по дате
 sorted_ops = sort_by_date(operations, ascending=False)
 print(sorted_ops)  # От новых к старым
+
+# Поочередно выдает транзакции отфильтрованные по заданной валюте
+usd_transactions = filter_by_currency(transactions, "USD")
+for _ in range(2):
+    print(next(usd_transactions))
+
+>>> {
+              "id": 142264268,
+              "state": "EXECUTED",
+              "date": "2019-04-04T23:20:05.206878",
+              "operationAmount": {
+                  "amount": "79114.93",
+                  "currency": {
+                      "name": "USD",
+                      "code": "USD"
+                  }
+              },
+              "description": "Перевод со счета на счет",
+              "from": "Счет 19708645243227258542",
+              "to": "Счет 75651667383060284188"
+       }
+
+# Возвращает описание операции для каждой транзакции по очереди
+descriptions = transaction_descriptions(transactions)
+for _ in range(5):
+    print(next(descriptions))
+
+>>> Перевод организации
+    Перевод со счета на счет
+    Перевод со счета на счет
+    Перевод с карты на карту
+    Перевод организации
+
+# Генерирует номера карт в заданном диапазоне
+for card_number in card_number_generator(1, 5):
+    print(card_number)
+
+>>> 0000 0000 0000 0001
+    0000 0000 0000 0002
+    0000 0000 0000 0003
+    0000 0000 0000 0004
+    0000 0000 0000 0005
 ```
 🧪 Тесты
 ```
