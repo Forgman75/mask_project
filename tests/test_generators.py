@@ -1,6 +1,10 @@
 import pytest
 
-from src.generators import card_number_generator, filter_by_currency, transaction_descriptions
+from src.generators import (
+    card_number_generator,
+    filter_by_currency,
+    transaction_descriptions
+)
 
 
 def test_filter_usd_transactions(sample_transactions: list[dict]) -> None:
@@ -41,7 +45,7 @@ def test_iterator_can_be_consumed_once(
 @pytest.mark.parametrize("currency", ["USD", "RUB"])
 def test_case_sensitive_currency(
     sample_transactions: list[dict], currency: str
-):
+) -> None:
     """Тест чувствительности к регистру валюты"""
     # Фильтр должен быть чувствителен к регистру
     result_upper = list(filter_by_currency(sample_transactions, currency))
@@ -181,8 +185,8 @@ def test_missing_description_key(
 
 
 def test_iteration_transactions_with_for_loop(
-    sample_transactions, expected_descriptions
-):
+    sample_transactions: list[dict], expected_descriptions: list
+) -> None:
     """Тест итерации через for loop"""
     descriptions = transaction_descriptions(sample_transactions)
     results = [desc for desc in descriptions]
@@ -228,7 +232,7 @@ def test_parametrized_iteration(count: int) -> None:
         (1, 100, 100),
     ],
 )
-def test_generator_count(start, stop, expected_count):
+def test_generator_count(start: int, stop: int, expected_count: int) -> None:
     """Тест количества сгенерированных номеров"""
     cards = list(card_number_generator(start, stop))
     assert len(cards) == expected_count
@@ -244,8 +248,8 @@ def test_generator_count(start, stop, expected_count):
     ],
 )
 def test_generator_range_boundaries(
-    start, stop, expected_first, expected_last
-):
+    start: int, stop: int, expected_first: str, expected_last: str
+) -> None:
     """Тест граничных значений диапазона"""
     cards = list(card_number_generator(start, stop))
 
@@ -253,7 +257,7 @@ def test_generator_range_boundaries(
     assert cards[-1] == expected_last, f"Последний номер неверный"
 
 
-def test_format_correctness(valid_card_ranges):
+def test_format_correctness(valid_card_ranges: list[tuple]) -> None:
     """Тест правильности форматирования номеров"""
     for start, stop in valid_card_ranges:
         cards = list(card_number_generator(start, stop))
@@ -281,7 +285,7 @@ def test_format_correctness(valid_card_ranges):
         (-100, 100),
     ],
 )
-def test_invalid_start_value(start, stop):
+def test_invalid_start_value(start: int, stop: int) -> None:
     """Тест невалидного начального значения"""
     with pytest.raises(ValueError) as exc_info:
         list(card_number_generator(start, stop))
@@ -297,7 +301,7 @@ def test_invalid_start_value(start, stop):
         (5, 10000000000000001),
     ],
 )
-def test_invalid_stop_value(start, stop):
+def test_invalid_stop_value(start: int, stop: int) -> None:
     """Тест невалидного конечного значения"""
     with pytest.raises(ValueError) as exc_info:
         list(card_number_generator(start, stop))
@@ -313,7 +317,7 @@ def test_invalid_stop_value(start, stop):
         (999, 1),
     ],
 )
-def test_start_greater_than_stop(start, stop):
+def test_start_greater_than_stop(start: int, stop: int) -> None:
     """Тест когда start > stop"""
     with pytest.raises(ValueError) as exc_info:
         list(card_number_generator(start, stop))
@@ -321,7 +325,7 @@ def test_start_greater_than_stop(start, stop):
     assert "не может быть больше" in str(exc_info.value)
 
 
-def test_edge_case_minimum():
+def test_edge_case_minimum() -> None:
     """Тест минимально возможного номера"""
     cards = list(card_number_generator(1, 1))
 
@@ -329,7 +333,7 @@ def test_edge_case_minimum():
     assert cards[0] == "0000 0000 0000 0001"
 
 
-def test_edge_case_maximum():
+def test_edge_case_maximum() -> None:
     """Тест максимально возможного номера"""
     cards = list(card_number_generator(9999999999999999, 9999999999999999))
 
@@ -337,7 +341,7 @@ def test_edge_case_maximum():
     assert cards[0] == "9999 9999 9999 9999"
 
 
-def test_iteration_with_for_loop(valid_card_ranges):
+def test_iteration_with_for_loop(valid_card_ranges: list[tuple]) -> None:
     """Тест итерации через for loop"""
     for start, stop in valid_card_ranges:
         count = 0
@@ -349,7 +353,7 @@ def test_iteration_with_for_loop(valid_card_ranges):
         assert count == (stop - start + 1)
 
 
-def test_card_generator_exhaustion():
+def test_card_generator_exhaustion() -> None:
     """Тест исчерпания генератора"""
     gen = card_number_generator(1, 3)
 
@@ -363,7 +367,7 @@ def test_card_generator_exhaustion():
         next(gen)
 
 
-def test_zero_padding():
+def test_zero_padding() -> None:
     """Тест добавления ведущих нулей"""
     test_cases = [
         (1, "0000 0000 0000 0001"),
