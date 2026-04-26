@@ -8,6 +8,10 @@
 * Форматирование дат из ISO 8601 в читаемый формат
 * Фильтрация операций по статусу
 * Сортировка операций по дате
+* Фильтрация транзакций по валюте
+* Вывод описаний транзакций
+* Генерация номеров карт
+* Логирование
 
 ⚙️ Требования
 Python 3.10+
@@ -100,6 +104,20 @@ for card_number in card_number_generator(1, 5):
     0000 0000 0000 0003
     0000 0000 0000 0004
     0000 0000 0000 0005
+
+# Декоратор для логирования результатов выполнения функции
+>>> @log(filename="mylog.txt")
+        ... def my_function(x, y):
+        ...     return x + y
+        >>> my_function(1, 2)
+        3
+        # В файл mylog.txt будет записано: "my_function ok"
+        
+        >>> @log()
+        ... def another_function(x):
+        ...     raise ValueError("Error")
+        >>> another_function(1)
+        # В консоль будет выведено: "another_function error: ValueError. Inputs: (1,), {}"
 ```
 🧪 Тесты
 ```

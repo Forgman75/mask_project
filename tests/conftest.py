@@ -3,6 +3,11 @@
 """
 
 import pytest
+import os
+import tempfile
+import logging
+from src.decorators import log
+from typing import Generator, Callable
 
 
 @pytest.fixture
@@ -395,3 +400,87 @@ def invalid_ranges() -> list[tuple]:
         (100, 50),  # start > stop
         (5, 5),  # Валидный случай (должен работать)
     ]
+
+
+@pytest.fixture
+def temp_log_file() -> Generator:
+    """Временный файл для логов"""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+    ) as f:
+        log_path = f.name
+
+    yield log_path
+
+    # Cleanup после теста
+    if os.path.exists(log_path):
+        os.remove(log_path)
+
+
+@pytest.fixture
+def temp_log_directory() -> Generator:
+    """Временная директория для логов"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yield tmpdir
+
+
+@pytest.fixture
+def sample_functions() -> dict[str, Callable]:
+    """Примеры функций для тестирования декоратора"""
+
+    @log(filename=None)
+    def add_numbers(x, y):
+        """Складывает два числа"""
+        return x + y
+
+    @log(filename=None)
+    def raise_value_error(x):
+        """Вызывает ValueError"""
+        raise ValueError(f"Error with value {x}")
+
+    @log(filename=None)
+    def raise_type_error(x, y):
+        """Вызывает TypeError"""
+        raise TypeError(f"Error with {x} and {y}")
+
+    @log(filename=None)
+    def raise_key_error():
+        """Вызывает KeyError"""
+        raise KeyError("Missing key")
+
+    @log(filename=None)
+    def error_with_kwargs(a, b=10):
+        """Вызывает RuntimeError с kwargs"""
+        raise RuntimeError("Something went wrong")
+
+    @log(filename=None)
+    def function_no_args():
+        """Функция без аргументов"""
+        return 42
+
+    @log(filename=None)
+    def function_returns_none():
+        """Функция возвращающая None"""
+        pass
+
+    return {
+        "add": add_numbers,
+        "value_error": raise_value_error,
+        "type_error": raise_type_error,
+        "key_error": raise_key_error,
+        "kwargs": error_with_kwargs,
+        "no_args": function_no_args,
+        "none": function_returns_none,
+    }
+
+
+@pytest.fixture
+def cleanup_logging() -> Generator:
+    """Фикстура для очистки кэша логгеров между тестами"""
+
+    yield
+
+    # Очищаем все логгеры после теста
+    logger = logging.getLogger("function_logger")
+    logger.handlers.clear()
+    logger.propagate = True
