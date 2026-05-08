@@ -2,12 +2,14 @@
 Глобальные фикстуры и тестовые данные для всех тестов.
 """
 
-import pytest
+import logging
 import os
 import tempfile
-import logging
+from typing import Callable, Generator
+
+import pytest
+
 from src.decorators import log
-from typing import Generator, Callable
 
 
 @pytest.fixture
@@ -484,3 +486,40 @@ def cleanup_logging() -> Generator:
     logger = logging.getLogger("function_logger")
     logger.handlers.clear()
     logger.propagate = True
+
+
+@pytest.fixture
+def temp_json(tmp_path):
+    """Создаёт временный JSON-файл в изолированной директории pytest."""
+    return tmp_path / "test_data.json"
+
+
+@pytest.fixture
+def make_transactions():
+    """Фабрика для создания транзакций с нужной структурой."""
+
+    def _make_transaction(amount: float, currency_code: str) -> dict:
+        return {
+            "id": 1,
+            "operationAmount": {
+                "amount": amount,
+                "currency": {"name": currency_code, "code": currency_code},
+            },
+        }
+
+    return _make_transaction
+
+
+@pytest.fixture
+def make_transactions_without_amount():
+    """Фабрика для создания транзакций без поля amount."""
+
+    def _make_transaction(currency_code: str) -> dict:
+        return {
+            "id": 1,
+            "operationAmount": {
+                "currency": {"name": currency_code, "code": currency_code},
+            },
+        }
+
+    return _make_transaction
