@@ -1,10 +1,16 @@
-from src.generators import card_number_generator, filter_by_currency, transaction_descriptions
+from src.generators import (
+    card_number_generator,
+    filter_by_currency,
+    transaction_descriptions,
+)
 from src.processing import filter_by_state, sort_by_date
+from src.utils import convert_to_rubles, read_from_jsonfile
 from src.widget import get_date, mask_account_card
 
 
 def main():
     DATE_STR_ISO = "2024-03-11T02:26:18.671407"
+    FILE_PATH = "data/operations.json"
     list_of_dicts = [
         {
             "id": 41428829,
@@ -118,6 +124,10 @@ def main():
     descriptions = transaction_descriptions(transactions)
     for _ in range(5):
         print(next(descriptions))
+
+    print(read_from_jsonfile(file_path=FILE_PATH))
+    for transaction in transactions:
+        print(convert_to_rubles(transaction))
 
 
 if __name__ == "__main__":
