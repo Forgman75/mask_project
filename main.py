@@ -1,7 +1,8 @@
+from src.files_reader import load_transactions_csv, load_transactions_excel
 from src.generators import (
     card_number_generator,
     filter_by_currency,
-    transaction_descriptions,
+    transaction_descriptions
 )
 from src.processing import filter_by_state, sort_by_date
 from src.utils import convert_to_rubles, read_from_jsonfile
@@ -128,6 +129,14 @@ def main():
     print(read_from_jsonfile(file_path=FILE_PATH))
     for transaction in transactions:
         print(convert_to_rubles(transaction))
+
+    csv_transactions = load_transactions_csv('data/transactions.csv')
+    print(csv_transactions[:6])
+
+    excel_transactions = load_transactions_excel(
+        'data/transactions_excel.xlsx'
+        )
+    print(excel_transactions[-6:])
 
 
 if __name__ == "__main__":
