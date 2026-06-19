@@ -12,6 +12,7 @@
 * Вывод описаний транзакций
 * Генерация номеров карт
 * Логирование
+* Загрузка списка транзакций из CSV и XLSX файлов
 
 ⚙️ Требования
 Python 3.10+
@@ -118,6 +119,22 @@ for card_number in card_number_generator(1, 5):
         ...     raise ValueError("Error")
         >>> another_function(1)
         # В консоль будет выведено: "another_function error: ValueError. Inputs: (1,), {}"
+
+# Загружаем транзакции из CSV файла
+csv_transactions = load_transactions_csv('data/transactions.csv')
+print(csv_transactions[:6])
+
+>>> [{'id;state;date;amount;currency_name;currency_code;from;to;description': 
+    '650703;EXECUTED;2023-09-05T11:30:32Z;16210;Sol;PEN;Счет 58803664561298323391; Счет 39745660563456619397;Перевод организации'}, ...]
+
+# Загружаем транзакции из XSLX файла
+excel_transactions = load_transactions_excel(
+        'data/transactions_excel.xlsx'
+        )
+print(excel_transactions[-6:])
+
+>>> [{'id': 5446796.0, 'state': 'EXECUTED', 'date': '2020-10-06T23:30:05Z', 'amount': 26873.0, 'currency_name': 'Euro', 'currency_code': 'EUR', 'from': None, 'to': 'Счет 18984367308636722946', 'description': 'Открытие вклада'}, ...]
+
 ```
 🧪 Тесты
 ```
