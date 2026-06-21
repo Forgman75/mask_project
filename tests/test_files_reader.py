@@ -189,3 +189,30 @@ def test_load_csv_real_file_with_semicolon(tmp_path):
     result = load_transactions_csv(str(csv_file), sep=';')
         
     assert len(result) == 2
+
+
+def test_load_csv_with_missing_values_does_not_raise(tmp_path):
+    """
+    Проверяет, что функция НЕ падает с ошибкой:
+    'ValueError: Must specify a fill value or method'
+    когда в CSV есть пустые ячейки.
+    """
+    csv_file = tmp_path / "ops.csv"
+    # Пустые ячейки между запятыми — pandas прочитает их как NaN
+    csv_file.write_text(
+        "id,state,date,description,amount\n"
+        "1,EXECUTED,2019-12-08,Перевод,100\n"
+        "2,EXECUTED,,Перевод организации,\n"   # ← пустые date и amount
+        "3,,2019-11-12,,500\n"                 # ← пустые state и description
+        ",CANCELED,2019-10-01,Открытие вклада,200\n",  # ← пустой id
+        encoding="utf-8",
+    )
+
+    # Если функция содержит fillna(None) — здесь упадёт ValueError
+    result = load_transactions_csv(str(csv_file))
+
+    # Проверяем, что данные прочитаны
+    assert len(result) == 4
+    assert isinstance(result, list)
+    assert all(isinstance(row, dict) for row in result)
+
