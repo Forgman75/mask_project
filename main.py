@@ -130,7 +130,7 @@ def main():
     for transaction in transactions:
         print(convert_to_rubles(transaction))
 
-    csv_transactions = load_transactions_csv('data/transactions.csv')
+    csv_transactions = load_transactions_csv('data/transactions.csv', sep=';')
     print(csv_transactions[:6])
 
     excel_transactions = load_transactions_excel(

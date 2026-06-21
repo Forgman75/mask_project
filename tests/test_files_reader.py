@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
-
+import pandas as pd
+import numpy as np
 import pytest
 
 from src.files_reader import load_transactions_csv, load_transactions_excel
@@ -7,17 +8,22 @@ from src.files_reader import load_transactions_csv, load_transactions_excel
 
 @patch('src.files_reader.pd.read_csv')
 def test_load_csv_success(mock_read_csv):
-    """Успешное чтение CSV: возвращает список словарей"""
-    expected = [{'id': 1, 'amount': 1000.0, 'currency': 'RUB'}]
+    """Проверяет успешное чтение CSV-файла."""
     # Создаём мок DataFrame
-    mock_df = MagicMock()
-    mock_df.empty = False
-    mock_df.fillna.return_value.replace.return_value.to_dict.return_value = expected
+    mock_df = pd.DataFrame({
+        'id': [1, 2],
+        'state': ['EXECUTED', 'CANCELED'],
+        'description': ['Перевод', 'Открытие вклада']
+    })
     mock_read_csv.return_value = mock_df
 
-    result = load_transactions_csv('data/test.csv')
-    assert result == expected
-    mock_read_csv.assert_called_once_with('data/test.csv', encoding='utf-8')
+    result = load_transactions_csv('test.csv')
+
+    assert len(result) == 2
+    assert result[0]['id'] == 1
+    assert result[0]['state'] == 'EXECUTED'
+    assert result[1]['description'] == 'Открытие вклада'
+    mock_read_csv.assert_called_once_with('test.csv', encoding='utf-8', sep=',')
 
 
 @patch('src.files_reader.pd.read_csv')
@@ -38,6 +44,94 @@ def test_load_csv_error(mock_read_csv):
     mock_read_csv.side_effect = FileNotFoundError("Файл отсутствует")
     result = load_transactions_csv('data/missing.csv')
     assert result == []
+
+
+@patch('src.files_reader.pd.read_csv')
+def test_load_csv_with_missing_values(mock_read_csv):
+    """Проверяет обработку пропущенных значений (NaN -> None)."""
+    # DataFrame с NaN значениями
+    mock_df = pd.DataFrame({
+        'id': [1, 2],
+        'state': ['EXECUTED', np.nan],
+        'description': [np.nan, 'Открытие вклада']
+    })
+    mock_read_csv.return_value = mock_df
+
+    result = load_transactions_csv('test.csv')
+
+    assert len(result) == 2
+    assert result[0]['state'] == 'EXECUTED'
+    assert result[0]['description'] is None  # NaN заменён на None
+    assert result[1]['state'] is None  # NaN заменён на None
+    assert result[1]['description'] == 'Открытие вклада'
+
+
+@patch('src.files_reader.pd.read_csv')
+def test_load_csv_with_semicolon_separator(mock_read_csv):
+    """Проверяет чтение CSV с разделителем ';'."""
+    mock_df = pd.DataFrame({
+        'id': [1, 2],
+        'state': ['EXECUTED', 'CANCELED']
+    })
+    mock_read_csv.return_value = mock_df
+
+    result = load_transactions_csv('test.csv', sep=';')
+
+    assert len(result) == 2
+    mock_read_csv.assert_called_once_with('test.csv', encoding='utf-8', sep=';')
+
+
+@patch('src.files_reader.pd.read_csv')
+def test_load_csv_with_tab_separator(mock_read_csv):
+    """Проверяет использование табуляции как разделителя."""
+    mock_df = pd.DataFrame({'id': [1]})
+    mock_read_csv.return_value = mock_df
+
+    load_transactions_csv('test.csv', sep='\t')
+
+    mock_read_csv.assert_called_once_with('test.csv', encoding='utf-8', sep='\t')
+
+
+@patch('src.files_reader.pd.read_csv')
+def test_load_csv_parser_error(mock_read_csv):
+    """Проверяет обработку ошибки парсинга."""
+    mock_read_csv.side_effect = pd.errors.ParserError("Parser error")
+
+    result = load_transactions_csv('invalid.csv')
+
+    assert result == []
+
+@patch('src.files_reader.pd.read_csv')
+def test_load_csv_generic_exception(mock_read_csv):
+    """Проверяет обработку непредвиденной ошибки."""
+    mock_read_csv.side_effect = Exception("Unexpected error")
+
+    result = load_transactions_csv('test.csv')
+
+    assert result == []
+
+@patch('src.files_reader.pd.read_csv')
+def test_load_csv_with_pd_na(mock_read_csv):
+    """Проверяет замену pd.NA на None."""
+    mock_df = pd.DataFrame({
+        'id': [1, 2],
+        'state': ['EXECUTED', pd.NA]
+    })
+    mock_read_csv.return_value = mock_df
+
+    result = load_transactions_csv('test.csv')
+
+    assert result[1]['state'] is None
+
+@patch('src.files_reader.pd.read_csv')
+def test_load_csv_custom_encoding(mock_read_csv):
+    """Проверяет использование кастомной кодировки."""
+    mock_df = pd.DataFrame({'id': [1]})
+    mock_read_csv.return_value = mock_df
+
+    load_transactions_csv('test.csv', encoding='cp1251')
+
+    mock_read_csv.assert_called_once_with('test.csv', encoding='cp1251', sep=',')
 
 
 @patch('src.files_reader.pd.read_excel')
@@ -63,3 +157,35 @@ def test_load_excel_empty(mock_read_excel):
 
     result = load_transactions_excel('data/empty.xlsx')
     assert result == []
+
+
+
+def test_load_csv_real_file_with_comma(tmp_path):
+        """Тест с реальным CSV-файлом (запятая)."""
+        csv_file = tmp_path / "ops.csv"
+        csv_file.write_text(
+            "id,state,description\n"
+            "1,EXECUTED,Перевод\n"
+            "2,CANCELED,Открытие вклада\n",
+            encoding="utf-8",
+        )
+
+        result = load_transactions_csv(str(csv_file))
+
+        assert len(result) == 2
+        assert result[0]['state'] == 'EXECUTED'
+
+def test_load_csv_real_file_with_semicolon(tmp_path):
+    """Тест с реальным CSV-файлом (точка с запятой)."""
+    csv_file = tmp_path / "ops.csv"
+    csv_file.write_text(
+        "id;state;description\n"
+        "1;EXECUTED;Перевод\n"
+        "2;CANCELED;Открытие вклада\n",
+        encoding="utf-8",
+    )
+
+    # Для pandas версии
+    result = load_transactions_csv(str(csv_file), sep=';')
+        
+    assert len(result) == 2
