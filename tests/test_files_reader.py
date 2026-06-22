@@ -140,7 +140,11 @@ def test_load_excel_success(mock_read_excel):
     expected = [{'id': 2, 'amount': 500.0, 'currency': 'USD'}]
     mock_df = MagicMock()
     mock_df.empty = False
-    mock_df.fillna.return_value.replace.return_value.to_dict.return_value = expected
+    mock_df.replace.return_value.to_dict.return_value = expected
+    
+    # Настраиваем len() чтобы возвращал правильное значение
+    mock_df.__len__ = MagicMock(return_value=len(expected))
+
     mock_read_excel.return_value = mock_df
 
     result = load_transactions_excel('data/test.xlsx')
@@ -216,3 +220,43 @@ def test_load_csv_with_missing_values_does_not_raise(tmp_path):
     assert isinstance(result, list)
     assert all(isinstance(row, dict) for row in result)
 
+
+import pytest
+import pandas as pd
+from src.files_reader import load_transactions_excel
+
+
+def test_load_excel_with_missing_values_does_not_raise(tmp_path):
+    """
+    Проверяет, что функция НЕ падает с ошибкой:
+    'ValueError: Must specify a fill value or method'
+    когда в Excel есть пустые ячейки.
+    """
+    excel_file = tmp_path / "ops.xlsx"
+    
+    # Создаём DataFrame с пустыми значениями (NaN)
+    df = pd.DataFrame({
+        "id": [1, 2, 3, None],
+        "state": ["EXECUTED", "EXECUTED", None, "CANCELED"],
+        "date": ["2019-12-08", None, "2019-11-12", "2019-10-01"],
+        "description": ["Перевод", "Перевод организации", None, "Открытие вклада"],
+        "amount": [100, None, 500, 200],
+    })
+    
+    # Сохраняем в Excel-файл
+    df.to_excel(str(excel_file), index=False, engine="openpyxl")
+    
+    # Если функция содержит fillna(None) — здесь упадёт ValueError
+    result = load_transactions_excel(str(excel_file))
+    
+    # Проверяем, что данные прочитаны
+    assert len(result) == 4
+    assert isinstance(result, list)
+    assert all(isinstance(row, dict) for row in result)
+    
+    # Проверяем, что пустые значения превратились в None
+    assert result[1]["date"] is None
+    assert result[1]["amount"] is None
+    assert result[2]["state"] is None
+    assert result[2]["description"] is None
+    assert result[3]["id"] is None
