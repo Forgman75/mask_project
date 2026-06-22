@@ -57,7 +57,9 @@ def load_transactions_excel(file_path: str) -> list[dict[str, Any]]:
             logger.info("Excel-файл пуст или содержит только заголовки")
             return []
         logger.info(f"Успешно считано {len(df)} транзакций из Excel")
-        return df.fillna(None).replace({pd.NA: None}).to_dict(orient='records')
+        df = df.replace({np.nan: None, pd.NA: None})
+        return df.to_dict(orient='records')
+        
     except FileNotFoundError:
         logger.error(f"Excel-файл не найден: {file_path}")
         return []
