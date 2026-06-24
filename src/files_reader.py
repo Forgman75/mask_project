@@ -8,6 +8,31 @@ import numpy as np
 logger = logging.getLogger("files_reader")
 logger.setLevel(logging.INFO)
 
+
+def _normalize_row(row: dict[str, Any]) -> dict:
+    """Приводит плоскую строку из CSV/XLSX к общей структуре транзакции."""
+    amount = str(row.get("amount", "0") or "0")
+    currency_name = str(row.get("currency_name", "") or "")
+    currency_code = str(row.get("currency_code", "") or "")
+
+    return {
+        "id": int(row.get("id", 0) or 0),
+        "state": str(row.get("state", "") or ""),
+        "date": str(row.get("date", "") or ""),
+        "description": str(row.get("description", "") or ""),
+        "from": str(row.get("from", "") or ""),
+        "to": str(row.get("to", "") or ""),
+        "operationAmount": {
+            "amount": amount,
+            "currency": {
+                "name": currency_name,
+                "code": currency_code,
+            },
+        },
+    }
+
+
+
 def load_transactions_csv(
         file_path: str,
         sep: str = ",",
@@ -30,8 +55,8 @@ def load_transactions_csv(
         logger.info(f"Успешно считано {len(df)} транзакций из CSV")
         # Исправлено: корректная замена NaN на None
         df = df.replace({np.nan: None, pd.NA: None})
-        return df.to_dict(orient='records')
-
+        raw_records = df.to_dict(orient="records")
+        return [_normalize_row(row) for row in raw_records]
 
     except FileNotFoundError:
         logger.error(f"CSV-файл не найден: {file_path}")
@@ -58,7 +83,8 @@ def load_transactions_excel(file_path: str) -> list[dict[str, Any]]:
             return []
         logger.info(f"Успешно считано {len(df)} транзакций из Excel")
         df = df.replace({np.nan: None, pd.NA: None})
-        return df.to_dict(orient='records')
+        raw_records = df.to_dict(orient="records")
+        return [_normalize_row(row) for row in raw_records]
         
     except FileNotFoundError:
         logger.error(f"Excel-файл не найден: {file_path}")
