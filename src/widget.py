@@ -40,8 +40,14 @@ def get_date(date: str) -> str:
     Функция для преобразования строки с датой в формате ISO 8601
     в строку вида "ДД.ММ.ГГГГ"
     """
+    if not date:
+        return ""
+    
+    # Заменяем 'Z' на '+00:00'
+    if date.endswith("Z"):
+        date = date[:-1] + "+00:00"
 
-    datetime_from_iso = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f")
+    datetime_from_iso = datetime.fromisoformat(date)
     result_date = datetime_from_iso.strftime("%d.%m.%Y")
-
+    
     return result_date
