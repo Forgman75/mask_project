@@ -1,6 +1,6 @@
-from operator import itemgetter
-from collections import Counter
 import re
+from collections import Counter
+from operator import itemgetter
 
 
 def filter_by_state(
@@ -9,10 +9,19 @@ def filter_by_state(
     """
     Функция возвращает новый список словарей, содержащий только те словари,
     у которых ключ state соответствует указанному значению.
+    Если state=None — возвращает транзакции с пустым/отсутствующим state.
     """
+    if state is None:
+        return [
+            item
+            for item in in_list_dicts
+            if not item.get("state")  # None, '', или ключ отсутствует
+        ]
+
     target = state.upper()
     return [
-        item for item in in_list_dicts
+        item
+        for item in in_list_dicts
         if str(item.get("state", "")).upper() == target
     ]
 
@@ -68,5 +77,3 @@ def process_bank_search(data: list[dict], search: str) -> list[dict]:
         if description and pattern.search(description):
             result.append(item)
     return result
-
-

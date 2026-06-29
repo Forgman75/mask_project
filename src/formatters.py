@@ -1,5 +1,4 @@
-from datetime import datetime
-from src.widget import mask_account_card, get_date
+from src.widget import get_date, mask_account_card
 
 
 def _format_amount(amount_str: str) -> str:
@@ -48,5 +47,3 @@ def format_transaction(transaction: dict) -> str:
     lines.append(f"Сумма: {amount} {currency}")
 
     return "\n".join(lines)
-
-

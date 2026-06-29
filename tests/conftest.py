@@ -523,3 +523,13 @@ def make_transactions_without_amount():
         }
 
     return _make_transaction
+
+
+@pytest.fixture
+def sample_data():
+    return [
+        {"id": 1, "description": "Открытие вклада"},
+        {"id": 2, "description": "Перевод организации"},
+        {"id": 3, "description": "Открытие счёта"},
+        {"id": 4, "description": "Перевод с карты на карту"},
+    ]

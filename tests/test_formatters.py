@@ -11,7 +11,10 @@ def test_format_transaction_with_from_and_to():
     }
     result = format_transaction(tx)
     assert "12.11.2019 Перевод с карты на карту" in result
-    assert "MasterCard 1234 56** **** 3456 -> Visa Platinum 9876 54** **** 7654" in result
+    assert (
+        "MasterCard 1234 56** **** 3456 -> Visa Platinum 9876 54** **** 7654"
+        in result
+    )
     assert "Сумма: 130 USD" in result
 
 
@@ -21,7 +24,10 @@ def test_format_transaction_without_from():
         "description": "Открытие вклада",
         "from": "",
         "to": "Счет 12345678901234567890",
-        "operationAmount": {"amount": "40542.00", "currency": {"name": "руб."}},
+        "operationAmount": {
+            "amount": "40542.00",
+            "currency": {"name": "руб."},
+        },
     }
     result = format_transaction(tx)
     assert "08.12.2019 Открытие вклада" in result

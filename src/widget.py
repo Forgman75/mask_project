@@ -13,10 +13,10 @@ def mask_account_card(info: str) -> str:
     и возвращаем пользователю.
 
     """
-    
+
     if not info or not info.strip():
-        return ''
-    
+        return ""
+
     parts = info.split()
 
     if len(parts) < 2:
@@ -45,15 +45,13 @@ def get_date(date: str) -> str:
     """
     if not date:
         return ""
-    
+
     # Заменяем 'Z' на '+00:00'
     if date.endswith("Z"):
         date = date[:-1] + "+00:00"
-    
+
     try:
         datetime_from_iso = datetime.fromisoformat(date)
         return datetime_from_iso.strftime("%d.%m.%Y")
     except ValueError:
         return date
-
-

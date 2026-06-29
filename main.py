@@ -1,12 +1,10 @@
 import sys
-from typing import Optional
 
-from src.generators import filter_by_currency
-from src.processing import filter_by_state, sort_by_date, process_bank_search
-from src.utils import read_from_jsonfile
-from src.formatters import format_transaction
 from src.files_reader import load_transactions_csv, load_transactions_excel
-
+from src.formatters import format_transaction
+from src.generators import filter_by_currency
+from src.processing import filter_by_state, process_bank_search, sort_by_date
+from src.utils import read_from_jsonfile
 
 YES_ANSWERS = {"да", "yes", "y", "yep", "true", "1"}
 NO_ANSWERS = {"нет", "no", "n", "nope", "false", "0"}
@@ -36,8 +34,7 @@ def _ask_yes_no(prompt: str) -> bool | None:
             return True
         if answer in NO_ANSWERS:
             return False
-        print("Пожалуйста, введите 'Да' или 'Нет'."
-        "(или 'exit' для выхода).")
+        print("Пожалуйста, введите 'Да' или 'Нет'." "(или 'exit' для выхода).")
 
 
 def _choose_file_type() -> str | None:
@@ -66,7 +63,9 @@ def _ask_file_path() -> str | None:
     Возвращает путь или None (если команда выхода).
     """
     while True:
-        filepath = input("Введите путь к файлу (или 'exit' для выхода): ").strip()
+        filepath = input(
+            "Введите путь к файлу (или 'exit' для выхода): "
+        ).strip()
         if _is_exit_command(filepath):
             return None
         if filepath:
@@ -102,14 +101,21 @@ def _ask_sort_direction() -> bool | None:
       - None  — если команда выхода
     """
     while True:
-        direction = input("Отсортировать по возрастанию или по убыванию? ").strip().lower()
+        direction = (
+            input("Отсортировать по возрастанию или по убыванию? ")
+            .strip()
+            .lower()
+        )
         if _is_exit_command(direction):
             return None
         if "возраст" in direction:
             return False
         if "убыв" in direction:
             return True
-        print("Пожалуйста, введите 'по возрастанию' или 'по убыванию' (или 'exit' для выхода).")
+        print(
+            "Пожалуйста, введите 'по возрастанию' или"
+            " 'по убыванию' (или 'exit' для выхода)."
+        )
 
 
 def _ask_search_word() -> str | None:
@@ -118,7 +124,9 @@ def _ask_search_word() -> str | None:
     Возвращает слово или None (если команда выхода).
     """
     while True:
-        word = input("Введите слово для поиска (или 'exit' для выхода): ").strip()
+        word = input(
+            "Введите слово для поиска (или 'exit' для выхода): "
+        ).strip()
         if _is_exit_command(word):
             return None
         if word:
@@ -131,21 +139,27 @@ def _load_file(choice: str, filepath: str) -> list:
     if choice == "1":
         return read_from_jsonfile(filepath)
     elif choice == "2":
-        return load_transactions_csv(filepath, sep=';')
+        return load_transactions_csv(filepath, sep=";")
     else:
         return load_transactions_excel(filepath)
 
 
 def main():
-    print("Привет! Добро пожаловать в программу работы с банковскими транзакциями.")
-    print("Подсказка: на любом шаге вы можете ввести 'exit' или 'выход' для завершения программы.\n")
+    print(
+        "Привет! Добро пожаловать в программу работы с" \
+        " банковскими транзакциями."
+    )
+    print(
+        "Подсказка: на любом шаге вы можете ввести 'exit'"
+        "или 'выход' для завершения программы.\n"
+    )
 
     # 1. Выбор типа файла
     choice = _choose_file_type()
     if choice is None:
         _goodbye()
         return
-    
+
     file_type = {"1": "JSON", "2": "CSV", "3": "XLSX"}[choice]
     print(f"Для обработки выбран {file_type}-файл.")
 
@@ -165,7 +179,6 @@ def main():
         except Exception as e:
             print(f"Ошибка при чтении файла: {e}")
             print("   Попробуйте ввести путь ещё раз.\n")
-
 
     # 2. Фильтрация по статусу
     status = _ask_status()
@@ -196,9 +209,11 @@ def main():
     if rub_only:
         data = list(filter_by_currency(data, "RUB"))
 
-
     # 5. Поиск по слову в описании
-    search_choice = _ask_yes_no("\nОтфильтровать список транзакций по определенному слову в описании? Да/Нет\n")
+    search_choice = _ask_yes_no(
+        "\nОтфильтровать список транзакций по определенному слову в описании?"
+        "Да/Нет\n"
+    )
     if search_choice is None:
         _goodbye()
         return
@@ -212,7 +227,10 @@ def main():
     # 6. Вывод результата
     print("Распечатываю итоговый список транзакций...")
     if not data:
-        print("\nНе найдено ни одной транзакции, подходящей под ваши условия фильтрации")
+        print(
+            "\nНе найдено ни одной транзакции," \
+            " подходящей под ваши условия фильтрации"
+        )
         return
 
     print(f"\nВсего банковских операций в выборке: {len(data)}\n")
@@ -226,6 +244,5 @@ def _goodbye():
     print("\n👋 Спасибо за использование программы. До свидания!")
 
 
-    
 if __name__ == "__main__":
     main()
