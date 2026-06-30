@@ -14,10 +14,13 @@ def mask_account_card(info: str) -> str:
 
     """
 
+    if not info or not info.strip():
+        return ""
+
     parts = info.split()
 
     if len(parts) < 2:
-        raise ValueError("Ожидается формат: 'Тип Номер'")
+        raise ValueError("Ожидается формат: 'Тип Номер' ")
 
     card_or_account_type = " ".join(parts[:-1])
     number = parts[-1]
@@ -40,8 +43,15 @@ def get_date(date: str) -> str:
     Функция для преобразования строки с датой в формате ISO 8601
     в строку вида "ДД.ММ.ГГГГ"
     """
+    if not date:
+        return ""
 
-    datetime_from_iso = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f")
-    result_date = datetime_from_iso.strftime("%d.%m.%Y")
+    # Заменяем 'Z' на '+00:00'
+    if date.endswith("Z"):
+        date = date[:-1] + "+00:00"
 
-    return result_date
+    try:
+        datetime_from_iso = datetime.fromisoformat(date)
+        return datetime_from_iso.strftime("%d.%m.%Y")
+    except ValueError:
+        return date

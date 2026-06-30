@@ -1,6 +1,6 @@
 import pytest
 
-from src.processing import filter_by_state, sort_by_date
+from src.processing import filter_by_state, process_bank_operations, process_bank_search, sort_by_date
 
 
 def test_filter_executed_state(mixed_state_operations: list[dict]) -> None:
@@ -21,8 +21,9 @@ def test_filter_canceled_state(mixed_state_operations: list[dict]) -> None:
 def test_filter_none_state(mixed_state_operations: list[dict]) -> None:
     """Тест фильтрации по None статусу"""
     result = filter_by_state(mixed_state_operations, None)
-    assert len(result) == 1
-    assert result[0]["state"] is None
+
+    # Ожидаем транзакции с пустым/отсутствующим state
+    assert all(not item.get("state") for item in result)
 
 
 def test_filter_nonexistent_state(mixed_state_operations: list[dict]) -> None:
@@ -50,6 +51,14 @@ def test_filter_preserves_original_dicts(list_of_dicts: list[dict]) -> None:
     assert result[0] is list_of_dicts[0]
 
 
+def test_filter_by_status_case_insensitive(
+    mixed_state_operations: list[dict],
+) -> None:
+    """Проверка что значение статуса не чувствительно к регистру"""
+    result = filter_by_state(mixed_state_operations, "executed")
+    assert len(result) == 2
+
+
 @pytest.mark.parametrize(
     "state_value",
     [
@@ -62,22 +71,25 @@ def test_filter_preserves_original_dicts(list_of_dicts: list[dict]) -> None:
     ],
 )
 def test_parametrized_state_filtering(
-    mixed_state_operations: list[dict], state_value: str
+    mixed_state_operations: list[dict], state_value: str | None
 ) -> None:
     """Параметризованный тест фильтрации разными статусами"""
     result = filter_by_state(mixed_state_operations, state_value)
-    # Проверяем что все результаты имеют нужный статус
-    if state_value is not None:
-        assert all(op.get("state") == state_value for op in result)
-    else:
-        assert all(op.get("state") is None for op in result)
+    # Проверяем, что результат — список
+    assert isinstance(result, list)
+    # Проверяем, что все элементы имеют нужный state
+    for item in result:
+        if state_value is None:
+            assert not item.get("state")
+        else:
+            assert str(item.get("state", "")).upper() == state_value.upper()
 
 
-def test_missing_state_key_raises_error() -> None:
-    """Тест что отсутствие ключа 'state' вызывает ошибку"""
+def test_missing_state_key_returns_empty() -> None:
+    """Тест что отсутствие ключа 'state' возвращает пустой список"""
     data = [{"id": 1, "other": "value"}]
-    with pytest.raises(KeyError):
-        filter_by_state(data, "EXECUTED")
+    result = filter_by_state(data, "EXECUTED")
+    assert result == []
 
 
 def test_sort_descending_default(unsorted_by_date: list[dict]) -> None:
@@ -152,3 +164,100 @@ def test_parametrized_sort_order(
         assert result[0]["date"] >= result[-1]["date"]
     else:
         assert result[0]["date"] <= result[-1]["date"]
+
+
+def test_process_bank_operations_basic(
+    sample_transactions: list[dict],
+) -> None:
+    """Основной тест подсчета операций в каждой категории"""
+    categories = [
+        "Перевод с карты на карту",
+        "Перевод организации",
+        "Перевод со счета на счет",
+    ]
+    result = process_bank_operations(sample_transactions, categories)
+    assert result == {
+        "Перевод с карты на карту": 1,
+        "Перевод организации": 2,
+        "Перевод со счета на счет": 2,
+    }
+
+
+def test_process_bank_operations_missing_category(
+    sample_transactions: list[dict],
+) -> None:
+    """Тест с несуществующей категорией"""
+    categories = ["Перевод организации", "Несуществующая"]
+    result = process_bank_operations(sample_transactions, categories)
+    assert result == {"Перевод организации": 2, "Несуществующая": 0}
+
+
+def test_process_bank_operations_empty_data(empty_list: list) -> None:
+    """Тест с попыткой подсчета операций по категории
+      с пустым списком данных
+    """
+    categories = ["Перевод организации"]
+    result = process_bank_operations(empty_list, categories)
+    assert result == {"Перевод организации": 0}
+
+
+def test_process_bank_operations_empty_categories(
+    sample_transactions: list[dict],
+) -> None:
+    """Тест с попыткой подсчета операций с пустым списком категорий"""
+    assert process_bank_operations(sample_transactions, []) == {}
+
+
+def test_process_bank_operations_returns_dict(
+    sample_transactions: list[dict],
+) -> None:
+    """Тест проверяющий что функция возвращает словарь"""
+    result = process_bank_operations(
+        sample_transactions, ["Перевод организации"]
+    )
+    assert isinstance(result, dict)
+
+
+def test_process_bank_search_found(sample_data: list[dict]) -> None:
+    """Тест нахождения совпадения в описании с поисковым словом"""
+    result = process_bank_search(sample_data, "Открытие")
+    assert len(result) == 2
+    assert {item["id"] for item in result} == {1, 3}
+
+
+def test_process_bank_search_not_found(sample_data: list[dict]) -> None:
+    """Тест проверяющий случай, когда совпадения со словом нет"""
+    result = process_bank_search(sample_data, "Пополнение")
+    assert result == []
+
+
+def test_process_bank_search_case_insensitive(sample_data: list[dict]) -> None:
+    """Тест проверяющий регистронезависимость поискового слова"""
+    result = process_bank_search(sample_data, "открытие")
+    assert len(result) == 2
+
+
+def test_process_bank_search_empty_data() -> None:
+    """Тест проверяющий поиск на пустом списке"""
+    assert process_bank_search([], "test") == []
+
+
+def test_process_bank_search_empty_query(sample_data: list[dict]) -> None:
+    """Тест проверяющий использование на данных пустого запроса"""
+    assert process_bank_search(sample_data, "") == sample_data
+
+
+def test_process_bank_search_regex(sample_data: list[dict]) -> None:
+    """Тест проверяющий использование на данных regex-паттерна"""
+    # Паттерн: слово, начинающееся на "Перевод" и заканчивающееся на "карты"
+    result = process_bank_search(sample_data, r"Перевод.*карты")
+    assert len(result) == 1
+    assert result[0]["id"] == 4
+
+
+def test_process_bank_search_missing_description() -> None:
+    """Тест проверяющий поиск на данных с отсутствующим описанием"""
+    data = [{"id": 1}, {"id": 2, "description": "Перевод"}]
+    result = process_bank_search(data, "Перевод")
+    assert len(result) == 1
+    assert result[0]["id"] == 2

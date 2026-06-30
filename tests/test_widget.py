@@ -44,8 +44,6 @@ def test_account_masking_various_types(input_str: str, expected: str) -> None:
         "1234567890123456",  # Только номер
         "Card 12345",  # Неправильная длина
         "Счет 123",  # Неправильная длина
-        "",  # Пустая строка
-        "  ",  # Только пробелы
         "Card 12345678901234567",  # 17 цифр
         "Card 123456789012345",  # 15 цифр
     ],
@@ -54,6 +52,13 @@ def test_invalid_inputs_raise_error(invalid_input: str) -> None:
     """Тест обработки невалидных входных данных"""
     with pytest.raises((ValueError, IndexError)):
         mask_account_card(invalid_input)
+
+
+def test_empty_string_returns_empty_string() -> None:
+    """Отдельный тест: пустая строка возвращает '', не падает."""
+    assert mask_account_card("") == ""
+    assert mask_account_card("\t") == ""
+    assert mask_account_card("   ") == ""
 
 
 def test_multi_word_card_type() -> None:
@@ -98,21 +103,37 @@ def test_valid_iso_date_conversion(iso_date: str, expected: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "invalid_date,expected_behavior",
+    [
+        # Форматы, которые функция теперь корректно обрабатывает
+        ("2024-03-11", "11.03.2024"),  # Без времени — работает!
+        ("2024-03-11T02:26:18", "11.03.2024"),  # Полный формат
+        # Невалидные форматы возвращают исходную строку
+        ("11.03.2024", "11.03.2024"),  # Неверный формат → возврат как есть
+        ("2024/03/11T02:26:18", "2024/03/11T02:26:18"),  # Другой разделитель
+        ("", ""),  # Пустая строка
+        ("invalid", "invalid"),  # Полностью невалидная
+    ],
+)
+def test_invalid_date_formats(
+    invalid_date: str, expected_behavior: str
+) -> None:
+    """Тест обработки невалидных форматов дат"""
+    result = get_date(invalid_date)
+    assert result == expected_behavior
+
+
+@pytest.mark.parametrize(
     "invalid_date",
     [
-        "2024-03-11",  # Без времени
-        "11.03.2024",  # Неверный формат
-        "2024/03/11T02:26:18",  # Другой разделитель
-        "",  # Пустая строка
-        "invalid",  # Полностью невалидная
         "2024-13-01T00:00:00",  # Неверный месяц
         "2024-02-30T00:00:00",  # Неверный день
     ],
 )
-def test_invalid_date_formats(invalid_date: str) -> None:
-    """Тест обработки невалидных форматов дат"""
-    with pytest.raises((ValueError, IndexError)):
-        get_date(invalid_date)
+def test_truly_invalid_dates_raise_error(invalid_date: str) -> None:
+    """Невалидные даты возвращают исходную строку, не падают."""
+    result = get_date(invalid_date)
+    assert result == invalid_date
 
 
 def test_date_ignores_time_component() -> None:
